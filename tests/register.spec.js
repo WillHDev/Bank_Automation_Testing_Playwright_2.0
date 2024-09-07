@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { stat } from 'fs';
+import { beforeEach } from 'node:test';
 
 //as setup
 
@@ -18,6 +19,8 @@ function makeString(length) {
     return result;
 }
 
+
+
 function randomAddress() {
     return makeNumber(4) + ' ' + makeString(6) + ' ' + 'Street';
 }
@@ -27,14 +30,25 @@ function makeNumber(length) {
     return Math.random().toString().substr(length); 
 
 }
-Math.random().toString().substr(4) 
+
 
 //console.log(makeString(5));
 
 //TODO: make user's name dynamic and make it persist
 //TODO: add random city and state generators
+//beforeEach('Create unique user', async ({}))
 
-const user1 = {
+function generateRandomUsername(baseUsername) {
+    // You can change the number of random digits or characters here
+    const randomSuffix = Math.random().toString(36).substring(2, 10); // Generates a random alphanumeric string
+    return `${baseUsername}_${randomSuffix}`;
+  };
+   
+
+//TODO: replace test with 'setup'?
+test('Register', async ({ page }) => {
+  // Perform authentication steps. Replace these actions with your own.
+  const user1 = {
     firstName: makeString(7),
     lastName: makeString(9),
     address: randomAddress(),
@@ -43,13 +57,10 @@ const user1 = {
     zipCode: makeNumber(5),
     phoneNumber: makeNumber(10),
     sSN: makeNumber(9),
-    username: makeString(10),
-    password: makeString(8) + makeNumber(3)
+    username: generateRandomUsername('User'),
+    password: makeString(4) + makeNumber(3)
 }
 
-//TODO: replace test with 'setup'?
-test('authenticate', async ({ page }) => {
-  // Perform authentication steps. Replace these actions with your own.
 
   const { firstName, lastName, address, city, state, zipCode, phoneNumber, sSN, username, password } = user1;
   await page.goto('https://parabank.parasoft.com/parabank/index.htm');
@@ -58,20 +69,41 @@ test('authenticate', async ({ page }) => {
   //Assert user navigates to Registration Page 
   await expect(page.getByText('Signing up is easy!')).toBeVisible();
 
-  await page.locator('#customer.firstName').fill(firstName);
-  await page.locator('#customer.lastName').fill(lastName);
-  await page.locator('#customer.address.street').fill(address);
-  await page.locator('#customer.address.city').fill(city);
-  await page.locator('#customer.address.state').fill(state);
-  await page.locator('#customer.address.zipCode').fill(zipCode);
-  await page.locator('#customer.ssn').fill(sSN);
-  await page.locator('#customer.phoneNumber').fill(phoneNumber);
-  await page.locator('#customer.password').fill(password);
-  await page.locator('#customer.username').fill(username);
-  await page.locator('#repeatedPassword').fill(password);
+  //customer.firstName
 
-  await page.getByRole('button', { value: 'Register' }).click();
+  await page.locator('[id="customer.firstName"]').fill(firstName);
+  await page.locator('[id="customer.lastName"]').fill(lastName);
+ 
+  await page.locator ('[id="customer.address.street"]').fill(address);
+ 
+  await page.locator ('[id="customer.address.city"]').fill(city);
+ 
+  await page.locator ('[id="customer.address.state"]').fill(state);
+ 
+  await page.locator('[id="customer.address.zipCode"]').fill(zipCode);
   
+  await page.locator ('[id="customer.ssn"]').fill(sSN);
+ 
+  await page.locator('[id="customer.phoneNumber"]').fill(phoneNumber);
+  
+  await page.locator('[id="customer.password"]').fill(password);
+
+  await page.locator('[id="customer.username"]').fill(username);
+  
+  await page.locator('[id="repeatedPassword"]').fill(password);
+  
+  //TODO 9/6 - use xml path
+//Mentor: why didnt this work?
+  //await page.getByRole('input', { value: 'Register' }).click();
+  //await page.getByRole('//input[text()="Register"]').click();
+  //await page.getByRole('//input[text()="Register"]').click();
+  //input[value="Register"]
+
+//expect( await page.getByRole('heading', {class: 'title' } ).toHaveText(`Welcome ${firstName}`));
+
+//correct:  //input[@value="Register"]
+await page.locator('input[value="Register"]').click();
+//expect( await page.getByRole('heading', {class: 'title' } ).toHaveText(`Welcome ${firstName}`));
   // Wait until the page receives the cookies.
   //
   // Sometimes login flow sets cookies in the process of several redirects.
@@ -79,7 +111,7 @@ test('authenticate', async ({ page }) => {
   //this 
 
   // Alternatively, you can wait until the page reaches a state where all cookies are set.
-  await expect(await page.getByRole('button', { value: `Welcome ${firstName}` })).toBeVisible();
+  await expect( page.locator('h1', { value: `Welcome ${firstName}` })).toBeVisible();
 
   // End of authentication steps.
 //TODO: what is this?
